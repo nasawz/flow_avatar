@@ -21,7 +21,7 @@ No image assets, network calls, WebView, or native platform code are required.
 
 ```yaml
 dependencies:
-  flow_avatar: ^0.2.0
+  flow_avatar: ^0.2.1
 ```
 
 ```sh
