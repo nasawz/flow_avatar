@@ -1,4 +1,41 @@
-# Local-only agent notes (repo uses .git/info/exclude; pub needs this too)
+# NOTE: When .pubignore exists it *replaces* .gitignore for package contents.
+# Keep this in sync with packaging intent (not a full clone of .gitignore).
+
+# Build / tooling artifacts
+.dart_tool/
+.flutter-plugins-dependencies
+.packages
+build/
+**/build/
+.pub-cache/
+.pub/
+coverage/
+doc/api/
+**/doc/api/
+pubspec.lock
+**/pubspec.lock
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+*.swp
+.history
+
+# Example platform junk / generated (keep example sources)
+example/.dart_tool/
+example/build/
+example/android/.gradle/
+example/android/local.properties
+example/ios/Flutter/ephemeral/
+example/ios/Flutter/Generated.xcconfig
+example/ios/Flutter/flutter_export_environment.sh
+example/ios/Runner/GeneratedPluginRegistrant.*
+example/macos/Flutter/ephemeral/
+example/linux/flutter/ephemeral/
+example/windows/flutter/ephemeral/
+
+# Local-only agent notes (also in .git/info/exclude)
 agents.md
 AGENTS.md
 HANDOFF.md

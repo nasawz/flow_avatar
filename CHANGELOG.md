@@ -1,3 +1,8 @@
+## 0.3.1
+
+- Fix pub package contents: a minimal `.pubignore` had replaced `.gitignore`
+  and accidentally shipped local `build/` artifacts. Republish a clean archive.
+
 ## 0.3.0
 
 - Add `FlowAvatarPattern` with five paint engines sharing the same seed palette:

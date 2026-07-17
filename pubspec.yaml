@@ -3,7 +3,7 @@ description: >-
   Deterministic animated multi-pattern avatars for Flutter. Stable visual
   identity from any string seed, with mesh, dither, plasma, ribbon, and noise
   patterns plus conversational states and no image assets.
-version: 0.3.0
+version: 0.3.1
 repository: https://github.com/nasawz/flow_avatar
 homepage: https://github.com/nasawz/flow_avatar
 issue_tracker: https://github.com/nasawz/flow_avatar/issues
