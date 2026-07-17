@@ -1,3 +1,11 @@
+## 0.2.1
+
+- Make conversational states visually distinct: stronger tints/washes, orbit
+  and pulse for thinking/speaking, clearer success green and error red.
+- Drive loop speed from state (`thinking` ~2.4×, `listening` slower).
+- Speaking stays lively without `audioAmplitude` (text-chat friendly).
+- Re-sync animation duration when `state` changes.
+
 ## 0.2.0
 
 - Add optional `baseColor` on `FlowAvatar` / `FlowAvatarModel.fromIdentity` so

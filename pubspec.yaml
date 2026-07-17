@@ -2,7 +2,7 @@ name: flow_avatar
 description: >-
   Deterministic animated gradient avatars for Flutter. Stable visual identity
   from any string seed, with conversational states and no image assets.
-version: 0.2.0
+version: 0.2.1
 repository: https://github.com/nasawz/flow_avatar
 homepage: https://github.com/nasawz/flow_avatar
 issue_tracker: https://github.com/nasawz/flow_avatar/issues

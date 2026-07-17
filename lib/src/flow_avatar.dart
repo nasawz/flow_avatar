@@ -108,7 +108,8 @@ class _FlowAvatarState extends State<FlowAvatar>
       _model = _buildModel();
     }
     if (oldWidget.animated != widget.animated ||
-        oldWidget.speed != widget.speed) {
+        oldWidget.speed != widget.speed ||
+        oldWidget.state != widget.state) {
       _syncAnimation();
     }
   }
@@ -128,7 +129,10 @@ class _FlowAvatarState extends State<FlowAvatar>
       _controller.value = 0;
       return;
     }
-    final duration = Duration(milliseconds: (8000 / widget.speed).round());
+    final combinedSpeed = widget.speed * flowAvatarStateSpeed(widget.state);
+    final duration = Duration(
+      milliseconds: (8000 / combinedSpeed).round().clamp(120, 20000),
+    );
     if (!_controller.isAnimating || _controller.duration != duration) {
       _controller.duration = duration;
       _controller.repeat();

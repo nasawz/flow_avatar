@@ -66,8 +66,10 @@ FlowAvatar(
 Set `animated: false` for lists, notifications, tests, and static previews.
 The same seed produces the same static frame on every invocation.
 
-At the default `speed: 1`, one seamless animation loop takes 8 seconds. Use
-`speed: 1.5` or `speed: 2` for a more energetic assistant.
+At the default `speed: 1`, one seamless **idle** loop takes 8 seconds. Each
+`FlowAvatarState` multiplies loop speed further (e.g. `thinking` ~2.4×) so
+busy states stay readable at small sizes. Use `speed: 1.5` or `speed: 2` for
+an extra global boost.
 
 The default inner edge and theme-aware shadow help the avatar retain depth on
 light surfaces. Set `edgeDarkness: 0` or `shadow: false` for a flat treatment.

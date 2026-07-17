@@ -48,6 +48,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  test('state speed multipliers differ across conversational modes', () {
+    expect(flowAvatarStateSpeed(FlowAvatarState.thinking), greaterThan(2));
+    expect(
+      flowAvatarStateSpeed(FlowAvatarState.thinking),
+      greaterThan(flowAvatarStateSpeed(FlowAvatarState.idle)),
+    );
+    expect(
+      flowAvatarStateSpeed(FlowAvatarState.listening),
+      lessThan(flowAvatarStateSpeed(FlowAvatarState.idle)),
+    );
+    expect(
+      flowAvatarStateSpeed(FlowAvatarState.error),
+      lessThan(flowAvatarStateSpeed(FlowAvatarState.speaking)),
+    );
+  });
+
   testWidgets('rebuilds palette when baseColor changes', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
