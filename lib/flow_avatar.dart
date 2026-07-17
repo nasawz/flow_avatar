@@ -1,3 +1,7 @@
+/// Deterministic animated gradient avatars for Flutter.
+///
+/// Start with [FlowAvatar], pass a stable [FlowAvatar.seed], and drive motion
+/// through [FlowAvatarState].
 library;
 
 export 'src/avatar_model.dart' show FlowAvatarModel, FlowAvatarSpot;

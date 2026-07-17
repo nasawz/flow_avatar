@@ -5,7 +5,11 @@ import 'avatar_state.dart';
 import 'flow_avatar_painter.dart';
 
 /// A deterministic, animated gradient avatar with no image assets.
+///
+/// The same [seed] always produces the same palette and composition. Motion is
+/// driven by [state], [speed], [intensity], and optional [audioAmplitude].
 class FlowAvatar extends StatefulWidget {
+  /// Creates a flow avatar bound to [seed].
   const FlowAvatar({
     super.key,
     required this.seed,
@@ -28,13 +32,20 @@ class FlowAvatar extends StatefulWidget {
 
   /// Stable identity such as a user ID or email address.
   final String seed;
+
+  /// Width and height of the avatar in logical pixels.
   final double size;
+
+  /// Conversational motion style applied by the painter.
   final FlowAvatarState state;
+
+  /// Clipping shape of the rendered avatar.
   final FlowAvatarShape shape;
 
   /// Overrides the default 24% corner radius for [FlowAvatarShape.roundedSquare].
   final BorderRadius? borderRadius;
 
+  /// When false, freezes the avatar on the first animation frame.
   final bool animated;
 
   /// Animation speed multiplier. A value of 1 completes a loop in 8 seconds.
@@ -53,6 +64,7 @@ class FlowAvatar extends StatefulWidget {
   /// Current normalized voice level used by [FlowAvatarState.speaking].
   final double audioAmplitude;
 
+  /// Accessibility label exposed as an image semantic.
   final String? semanticLabel;
 
   @override

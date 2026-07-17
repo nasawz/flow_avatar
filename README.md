@@ -1,5 +1,7 @@
 # Flow Avatar
 
+[![pub package](https://img.shields.io/pub/v/flow_avatar.svg)](https://pub.dev/packages/flow_avatar)
+
 Deterministic, animated gradient avatars for Flutter. The identity controls the
 palette and composition; time and conversational state control the motion.
 
@@ -14,6 +16,17 @@ No image assets, network calls, WebView, or native platform code are required.
 - TTS/audio-reactive speaking pulse
 - Honors the platform's reduced-motion setting
 - UTF-16 seed hashing for JavaScript-compatible string iteration semantics
+
+## Install
+
+```yaml
+dependencies:
+  flow_avatar: ^0.1.0
+```
+
+```sh
+flutter pub get
+```
 
 ## Usage
 

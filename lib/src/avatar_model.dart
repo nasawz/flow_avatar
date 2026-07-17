@@ -6,6 +6,7 @@ import 'avatar_seed.dart';
 
 /// Immutable, deterministic visual identity used by [FlowAvatar].
 final class FlowAvatarModel {
+  /// Creates a model from precomputed visual fields.
   const FlowAvatarModel({
     required this.seed,
     required this.colors,
@@ -53,15 +54,25 @@ final class FlowAvatarModel {
     );
   }
 
+  /// Stable numeric seed derived from the identity string.
   final int seed;
+
+  /// Five-color palette used by spots and the background.
   final List<Color> colors;
+
+  /// Darkened base color painted under the spots.
   final Color background;
+
+  /// Ordered radial color fields, largest first.
   final List<FlowAvatarSpot> spots;
+
+  /// Normalized position of the soft white highlight.
   final Offset highlightPosition;
 }
 
 /// One normalized radial color field in a [FlowAvatarModel].
 final class FlowAvatarSpot {
+  /// Creates a single animated color spot.
   const FlowAvatarSpot({
     required this.position,
     required this.radius,
@@ -72,12 +83,25 @@ final class FlowAvatarSpot {
     required this.amplitude,
   });
 
+  /// Center of the spot in normalized 0–1 coordinates.
   final Offset position;
+
+  /// Radius as a fraction of the avatar's shortest side.
   final double radius;
+
+  /// Base color before state tinting.
   final Color color;
+
+  /// Phase offset for the motion wave.
   final double phase;
+
+  /// Horizontal harmonic frequency multiplier.
   final int harmonicX;
+
+  /// Vertical harmonic frequency multiplier.
   final int harmonicY;
+
+  /// Motion amplitude in normalized coordinates.
   final Offset amplitude;
 }
 
