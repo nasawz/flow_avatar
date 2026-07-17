@@ -16,10 +16,17 @@ final class FlowAvatarModel {
   });
 
   /// Builds the same model for the same [identity] on every invocation.
-  factory FlowAvatarModel.fromIdentity(String identity) {
+  ///
+  /// When [baseColor] is provided, the palette is anchored to that color's
+  /// **hue** while layout remains driven by [identity]. Lightness is lifted
+  /// into a luminous band so theme primaries (often mid/dark) do not muddy
+  /// the avatar. The same [identity] + [baseColor] pair always yields the
+  /// same model. Changing only [baseColor] recolors the avatar without
+  /// reshaping spot geometry.
+  factory FlowAvatarModel.fromIdentity(String identity, {Color? baseColor}) {
     final seed = flowAvatarSeed(identity);
     final random = SeededRandom(seed);
-    final colors = _createPalette(seed, random);
+    final colors = _createPalette(seed, random, baseColor: baseColor);
     final spotCount = 9 + random.nextInt(4);
     final spots = List.generate(spotCount, (index) {
       final angle = random.between(0, math.pi * 2);
@@ -42,10 +49,14 @@ final class FlowAvatarModel {
       );
     })..sort((a, b) => b.radius.compareTo(a.radius));
 
+    // Theme-anchored palettes already sit bright; only gently deepen the bed.
+    // Seed-only palettes keep a richer dark underpainting.
+    final backgroundShift = baseColor == null ? -0.16 : -0.05;
+
     return FlowAvatarModel(
       seed: seed,
       colors: List.unmodifiable(colors),
-      background: _shiftLightness(colors.first, -0.16),
+      background: _shiftLightness(colors.first, backgroundShift),
       spots: List.unmodifiable(spots),
       highlightPosition: Offset(
         random.between(0.18, 0.38),
@@ -105,7 +116,7 @@ final class FlowAvatarSpot {
   final Offset amplitude;
 }
 
-List<Color> _createPalette(int seed, SeededRandom random) {
+List<Color> _createPalette(int seed, SeededRandom random, {Color? baseColor}) {
   const goldenAngle = 137.507764;
   const relationships = <List<double>>[
     [0, 28, -32, 58, -62],
@@ -114,16 +125,69 @@ List<Color> _createPalette(int seed, SeededRandom random) {
     [0, 90, 180, 270, 45],
     [0, 180, 26, -28, 152],
   ];
-  final baseHue = (seed * goldenAngle) % 360;
+  final baseHsl = baseColor == null ? null : HSLColor.fromColor(baseColor);
+  final baseHue = baseHsl?.hue ?? ((seed * goldenAngle) % 360);
   final relationship = relationships[random.nextInt(relationships.length)];
-  return relationship
-      .map((offset) {
-        final hue = (baseHue + offset + random.between(-7, 7)) % 360;
-        final saturation = random.between(0.62, 0.91);
-        final lightness = random.between(0.48, 0.67);
-        return HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
-      })
-      .toList(growable: false);
+
+  return [
+    for (var i = 0; i < relationship.length; i++)
+      _paletteColor(
+        baseHue: baseHue,
+        hueOffset: relationship[i],
+        random: random,
+        baseHsl: baseHsl,
+        isPrimarySlot: i == 0,
+      ),
+  ];
+}
+
+Color _paletteColor({
+  required double baseHue,
+  required double hueOffset,
+  required SeededRandom random,
+  required HSLColor? baseHsl,
+  required bool isPrimarySlot,
+}) {
+  final hue = _normalizeHue(baseHue + hueOffset + random.between(-7, 7));
+
+  late final double saturation;
+  late final double lightness;
+  if (baseHsl == null) {
+    saturation = random.between(0.62, 0.91);
+    lightness = random.between(0.48, 0.67);
+  } else {
+    // Anchor hue only. Lift sat/light into a candy-jelly band so Material
+    // primaries (often mid-dark and heavy) read as luminous fields.
+    final softSat = (baseHsl.saturation * 0.72 + 0.18).clamp(0.52, 0.84);
+    final liftedLight = _liftLightness(baseHsl.lightness);
+    if (isPrimarySlot) {
+      saturation = (softSat + random.between(-0.03, 0.05)).clamp(0.50, 0.86);
+      lightness = (liftedLight + random.between(-0.02, 0.06)).clamp(0.56, 0.78);
+    } else {
+      saturation = (softSat + random.between(-0.10, 0.08)).clamp(0.46, 0.84);
+      lightness = (liftedLight + random.between(-0.04, 0.10)).clamp(0.52, 0.80);
+    }
+  }
+
+  return HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+}
+
+/// Pushes theme lightness into a bright band without erasing hue family.
+///
+/// Dark primaries (L ~ 0.25–0.40) lift strongly; already-light seeds only
+/// nudge slightly so yellows/cyans do not wash out.
+double _liftLightness(double sourceLightness) {
+  const target = 0.64;
+  const minLift = 0.54;
+  // Blend toward target: dark colors move more (weight 0.75+).
+  final weight = (1.0 - sourceLightness).clamp(0.45, 0.85);
+  final lifted = sourceLightness * (1 - weight) + target * weight;
+  return lifted < minLift ? minLift : lifted;
+}
+
+double _normalizeHue(double hue) {
+  final mod = hue % 360;
+  return mod < 0 ? mod + 360 : mod;
 }
 
 Color _shiftLightness(Color color, double amount) {

@@ -21,7 +21,7 @@ No image assets, network calls, WebView, or native platform code are required.
 
 ```yaml
 dependencies:
-  flow_avatar: ^0.1.0
+  flow_avatar: ^0.2.0
 ```
 
 ```sh
@@ -42,9 +42,16 @@ FlowAvatar(
   shadow: true,
   shape: FlowAvatarShape.circle,
   intensity: 0.9,
+  // Optional: recolor around an app/theme brand color.
+  baseColor: Theme.of(context).colorScheme.primary,
   semanticLabel: '${user.name} avatar',
 )
 ```
+
+When `baseColor` is set, the palette keeps that color's **hue family** but
+lifts lightness into a luminous jelly range (Material primaries are often too
+dark to use raw). Spot geometry still comes only from `seed`, so switching
+theme colors recolors the avatar without reshaping it.
 
 For a speaking assistant, pass a normalized audio level between 0 and 1:
 

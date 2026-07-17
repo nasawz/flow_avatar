@@ -8,6 +8,10 @@ import 'flow_avatar_painter.dart';
 ///
 /// The same [seed] always produces the same palette and composition. Motion is
 /// driven by [state], [speed], [intensity], and optional [audioAmplitude].
+///
+/// Pass [baseColor] (for example `Theme.of(context).colorScheme.primary`) to
+/// recolor the palette around an app brand or user-selected theme color while
+/// keeping the geometric identity from [seed].
 class FlowAvatar extends StatefulWidget {
   /// Creates a flow avatar bound to [seed].
   const FlowAvatar({
@@ -23,6 +27,7 @@ class FlowAvatar extends StatefulWidget {
     this.edgeDarkness = 0.24,
     this.shadow = true,
     this.audioAmplitude = 0,
+    this.baseColor,
     this.semanticLabel,
   }) : assert(size > 0),
        assert(speed > 0),
@@ -64,6 +69,12 @@ class FlowAvatar extends StatefulWidget {
   /// Current normalized voice level used by [FlowAvatarState.speaking].
   final double audioAmplitude;
 
+  /// Optional brand/theme color that anchors the generated palette.
+  ///
+  /// When null, hues are derived only from [seed]. When set, the lead color
+  /// tracks this value and companion hues stay in a related family.
+  final Color? baseColor;
+
   /// Accessibility label exposed as an image semantic.
   final String? semanticLabel;
 
@@ -79,7 +90,7 @@ class _FlowAvatarState extends State<FlowAvatar>
   @override
   void initState() {
     super.initState();
-    _model = FlowAvatarModel.fromIdentity(widget.seed);
+    _model = _buildModel();
     _controller = AnimationController(vsync: this);
   }
 
@@ -92,13 +103,21 @@ class _FlowAvatarState extends State<FlowAvatar>
   @override
   void didUpdateWidget(covariant FlowAvatar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.seed != widget.seed) {
-      _model = FlowAvatarModel.fromIdentity(widget.seed);
+    if (oldWidget.seed != widget.seed ||
+        oldWidget.baseColor != widget.baseColor) {
+      _model = _buildModel();
     }
     if (oldWidget.animated != widget.animated ||
         oldWidget.speed != widget.speed) {
       _syncAnimation();
     }
+  }
+
+  FlowAvatarModel _buildModel() {
+    return FlowAvatarModel.fromIdentity(
+      widget.seed,
+      baseColor: widget.baseColor,
+    );
   }
 
   void _syncAnimation() {
@@ -169,6 +188,7 @@ class _FlowAvatarState extends State<FlowAvatar>
 
   List<BoxShadow> _shadowsFor(Brightness brightness) {
     final light = brightness == Brightness.light;
+    final tint = widget.baseColor ?? const Color(0xff382d69);
     return [
       BoxShadow(
         color: Colors.black.withValues(alpha: light ? 0.24 : 0.34),
@@ -177,7 +197,7 @@ class _FlowAvatarState extends State<FlowAvatar>
         offset: Offset(0, widget.size * 0.085),
       ),
       BoxShadow(
-        color: const Color(0xff382d69).withValues(alpha: light ? 0.12 : 0.20),
+        color: tint.withValues(alpha: light ? 0.16 : 0.24),
         blurRadius: widget.size * 0.10,
         spreadRadius: -widget.size * 0.045,
         offset: Offset(0, widget.size * 0.025),

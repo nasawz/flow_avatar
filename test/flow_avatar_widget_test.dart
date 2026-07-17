@@ -47,4 +47,32 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('rebuilds palette when baseColor changes', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: FlowAvatar(
+          seed: 'assistant',
+          animated: false,
+          baseColor: Color(0xFF3498DB),
+        ),
+      ),
+    );
+    expect(find.byType(FlowAvatar), findsOneWidget);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: FlowAvatar(
+          seed: 'assistant',
+          animated: false,
+          baseColor: Color(0xFFE74C3C),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final avatar = tester.widget<FlowAvatar>(find.byType(FlowAvatar));
+    expect(avatar.baseColor, const Color(0xFFE74C3C));
+    expect(tester.takeException(), isNull);
+  });
 }
