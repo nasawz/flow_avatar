@@ -1,0 +1,5 @@
+# Local-only agent notes (repo uses .git/info/exclude; pub needs this too)
+agents.md
+AGENTS.md
+HANDOFF.md
+handoff.md
