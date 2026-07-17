@@ -1,3 +1,24 @@
+## 0.3.0
+
+- Add `FlowAvatarPattern` with five paint engines sharing the same seed palette:
+  `mesh` (default), `dither`, `plasma`, `ribbon`, and `noise`.
+- Add optional `pattern` on `FlowAvatar` (default `mesh`, fully backward
+  compatible).
+- Animate ordered dither (Bayer 8×8) by rotating/scrolling the gradient axis —
+  reference packages often leave dither static.
+- All patterns honor continuous phase motion, conversational state washes, and
+  reduced-motion / `animated: false` freezes at phase 0.
+- Example gallery: live pattern switcher.
+
+## 0.2.2
+
+- Fix visible jump at the end of each motion cycle: drive the painter with a
+  continuous phase (`θ += Δt · ω`) instead of a modular 0→1
+  `AnimationController` loop. Non-integer frequencies (rotation, orbit,
+  contraction) are discontinuous across a wrap.
+- Keep `animated: false` / reduced-motion on a deterministic static pose
+  (phase 0). Changing `speed` or `state` no longer resets the phase.
+
 ## 0.2.1
 
 - Make conversational states visually distinct: stronger tints/washes, orbit

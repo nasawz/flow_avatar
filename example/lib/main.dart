@@ -63,6 +63,7 @@ class AvatarGallery extends StatefulWidget {
 
 class _AvatarGalleryState extends State<AvatarGallery> {
   FlowAvatarState _state = FlowAvatarState.idle;
+  FlowAvatarPattern _pattern = FlowAvatarPattern.mesh;
   FlowAvatarShape _shape = FlowAvatarShape.circle;
   double _intensity = 1;
   double _speed = 1;
@@ -132,7 +133,7 @@ class _AvatarGalleryState extends State<AvatarGallery> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Deterministic color fields with visible, state-aware motion.',
+                      'Deterministic multi-pattern color fields with state-aware motion.',
                       style: TextStyle(
                         color: colors.onSurfaceVariant,
                         fontSize: 15,
@@ -160,6 +161,7 @@ class _AvatarGalleryState extends State<AvatarGallery> {
                         seed: identity,
                         size: 104,
                         state: _state,
+                        pattern: _pattern,
                         shape: _shape,
                         speed: _speed,
                         intensity: _intensity,
@@ -235,6 +237,26 @@ class _AvatarGalleryState extends State<AvatarGallery> {
                   label: Text(state.name),
                   selected: state == _state,
                   onSelected: (_) => setState(() => _state = state),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'Pattern',
+              style: TextStyle(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: FlowAvatarPattern.values.map((pattern) {
+                return ChoiceChip(
+                  label: Text(pattern.name),
+                  selected: pattern == _pattern,
+                  onSelected: (_) => setState(() => _pattern = pattern),
                 );
               }).toList(),
             ),

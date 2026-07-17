@@ -1,17 +1,37 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'avatar_model.dart';
+import 'avatar_pattern.dart';
 import 'avatar_state.dart';
 import 'flow_avatar_painter.dart';
 
-/// A deterministic, animated gradient avatar with no image assets.
+/// Idle baseline: one full 2π turn every 8 seconds at [FlowAvatar.speed] 1.
+const double _kIdleLoopSeconds = 8;
+
+/// Cap frame delta so backgrounding does not fling the phase.
+const double _kMaxFrameDeltaSeconds = 0.05;
+
+/// Wrap phase occasionally so float sin/cos stay precise.
+const double _kPhaseWrap = math.pi * 2 * 64;
+
+/// A deterministic, animated multi-pattern avatar with no image assets.
 ///
-/// The same [seed] always produces the same palette and composition. Motion is
-/// driven by [state], [speed], [intensity], and optional [audioAmplitude].
+/// The same [seed] always produces the same palette and composition. Choose a
+/// [pattern] (`mesh`, `dither`, `plasma`, `ribbon`, `noise`) for the paint
+/// language. Motion is driven by [state], [speed], [intensity], and optional
+/// [audioAmplitude].
 ///
 /// Pass [baseColor] (for example `Theme.of(context).colorScheme.primary`) to
 /// recolor the palette around an app brand or user-selected theme color while
 /// keeping the geometric identity from [seed].
+///
+/// Motion uses a **continuous phase** clock (`θ += Δt · ω`) rather than a
+/// modular 0→1 loop. Multi-frequency fields (fractional rotation, orbit,
+/// contraction) are not continuous at a 0→1 wrap, which previously looked like
+/// a hard jump every loop.
 class FlowAvatar extends StatefulWidget {
   /// Creates a flow avatar bound to [seed].
   const FlowAvatar({
@@ -19,6 +39,7 @@ class FlowAvatar extends StatefulWidget {
     required this.seed,
     this.size = 64,
     this.state = FlowAvatarState.idle,
+    this.pattern = FlowAvatarPattern.mesh,
     this.shape = FlowAvatarShape.circle,
     this.borderRadius,
     this.animated = true,
@@ -44,17 +65,25 @@ class FlowAvatar extends StatefulWidget {
   /// Conversational motion style applied by the painter.
   final FlowAvatarState state;
 
+  /// Visual paint engine. Default [FlowAvatarPattern.mesh] matches prior releases.
+  ///
+  /// Same [seed] / [baseColor] palette across patterns; only the render
+  /// language changes (`mesh`, `dither`, `plasma`, `ribbon`, `noise`).
+  final FlowAvatarPattern pattern;
+
   /// Clipping shape of the rendered avatar.
   final FlowAvatarShape shape;
 
   /// Overrides the default 24% corner radius for [FlowAvatarShape.roundedSquare].
   final BorderRadius? borderRadius;
 
-  /// When false, freezes the avatar on the first animation frame.
+  /// When false, freezes the avatar on a deterministic static pose (phase 0).
   final bool animated;
 
-  /// Animation speed multiplier. A value of 1 completes a loop in 8 seconds.
-  /// Must be greater than zero.
+  /// Animation speed multiplier.
+  ///
+  /// At `1` with [FlowAvatarState.idle], the field advances at one full turn
+  /// per 8 seconds. Must be greater than zero.
   final double speed;
 
   /// Motion magnitude from 0 (breathing only) to 2.
@@ -84,14 +113,19 @@ class FlowAvatar extends StatefulWidget {
 
 class _FlowAvatarState extends State<FlowAvatar>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+  late final Ticker _ticker;
+  late final ValueNotifier<double> _phase;
   late FlowAvatarModel _model;
+
+  Duration _lastElapsed = Duration.zero;
+  double _phaseRadians = 0;
 
   @override
   void initState() {
     super.initState();
     _model = _buildModel();
-    _controller = AnimationController(vsync: this);
+    _phase = ValueNotifier<double>(0);
+    _ticker = createTicker(_onTick);
   }
 
   @override
@@ -121,27 +155,58 @@ class _FlowAvatarState extends State<FlowAvatar>
     );
   }
 
-  void _syncAnimation() {
+  bool get _shouldAnimate {
     final disableAnimations =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    if (!widget.animated || disableAnimations) {
-      _controller.stop();
-      _controller.value = 0;
+    return widget.animated && !disableAnimations;
+  }
+
+  double get _angularSpeedRadPerSec {
+    final combined = widget.speed * flowAvatarStateSpeed(widget.state);
+    return (math.pi * 2 / _kIdleLoopSeconds) * combined;
+  }
+
+  void _onTick(Duration elapsed) {
+    if (!_shouldAnimate) {
       return;
     }
-    final combinedSpeed = widget.speed * flowAvatarStateSpeed(widget.state);
-    final duration = Duration(
-      milliseconds: (8000 / combinedSpeed).round().clamp(120, 20000),
-    );
-    if (!_controller.isAnimating || _controller.duration != duration) {
-      _controller.duration = duration;
-      _controller.repeat();
+
+    final rawDt =
+        (elapsed - _lastElapsed).inMicroseconds /
+        Duration.microsecondsPerSecond;
+    _lastElapsed = elapsed;
+    if (rawDt <= 0) {
+      return;
+    }
+
+    final dt = rawDt.clamp(0.0, _kMaxFrameDeltaSeconds);
+    _phaseRadians += dt * _angularSpeedRadPerSec;
+    if (_phaseRadians.abs() > _kPhaseWrap) {
+      _phaseRadians = _phaseRadians % (math.pi * 2);
+    }
+    _phase.value = _phaseRadians;
+  }
+
+  void _syncAnimation() {
+    if (!_shouldAnimate) {
+      _ticker.stop();
+      _lastElapsed = Duration.zero;
+      // Deterministic static pose for lists / reduced motion.
+      _phaseRadians = 0;
+      _phase.value = 0;
+      return;
+    }
+
+    if (!_ticker.isActive) {
+      _lastElapsed = Duration.zero;
+      _ticker.start();
     }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _ticker.dispose();
+    _phase.dispose();
     super.dispose();
   }
 
@@ -149,8 +214,9 @@ class _FlowAvatarState extends State<FlowAvatar>
   Widget build(BuildContext context) {
     final painter = FlowAvatarPainter(
       model: _model,
-      animation: _controller,
+      phase: _phase,
       state: widget.state,
+      pattern: widget.pattern,
       intensity: widget.intensity,
       edgeDarkness: widget.edgeDarkness,
       audioAmplitude: widget.audioAmplitude,
