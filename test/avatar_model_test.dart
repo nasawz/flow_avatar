@@ -81,4 +81,45 @@ void main() {
       );
     }
   });
+
+  test('monochrome mode keeps all palette hues on one hue', () {
+    const amber = Color(0xFFFFB300);
+    final model = FlowAvatarModel.fromIdentity(
+      'community-ai-xiaomai',
+      baseColor: amber,
+      colorMode: FlowAvatarColorMode.monochrome,
+    );
+    final targetHue = HSLColor.fromColor(amber).hue;
+    for (final swatch in model.colors) {
+      final hue = HSLColor.fromColor(swatch).hue;
+      final delta = (hue - targetHue).abs();
+      expect(delta < 1.5 || delta > 358.5, isTrue);
+    }
+    // Spots only sample the mono palette.
+    for (final spot in model.spots) {
+      final hue = HSLColor.fromColor(spot.color).hue;
+      final delta = (hue - targetHue).abs();
+      expect(delta < 1.5 || delta > 358.5, isTrue);
+    }
+  });
+
+  test('harmonic mode may introduce companion hues away from base', () {
+    const violet = Color(0xFF651FFF);
+    // Try a few identities until the seeded relationship is multi-hue.
+    var foundSpread = false;
+    for (final id in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']) {
+      final model = FlowAvatarModel.fromIdentity(id, baseColor: violet);
+      final targetHue = HSLColor.fromColor(violet).hue;
+      for (final swatch in model.colors) {
+        final delta = (HSLColor.fromColor(swatch).hue - targetHue).abs();
+        final wrapped = delta > 180 ? 360 - delta : delta;
+        if (wrapped > 25) {
+          foundSpread = true;
+          break;
+        }
+      }
+      if (foundSpread) break;
+    }
+    expect(foundSpread, isTrue);
+  });
 }

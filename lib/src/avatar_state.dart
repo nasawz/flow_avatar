@@ -36,6 +36,17 @@ double flowAvatarStateSpeed(FlowAvatarState state) {
   };
 }
 
+/// How companion palette hues are derived around the lead color.
+enum FlowAvatarColorMode {
+  /// Multi-hue relationships (triads / complements). Default historical look.
+  harmonic,
+
+  /// Single-hue palette: only lightness and saturation steps.
+  ///
+  /// Reads as a purer “one color” avatar while keeping soft mesh depth.
+  monochrome,
+}
+
 /// The clipping shape of a [FlowAvatar].
 enum FlowAvatarShape {
   /// Circular clip (default).

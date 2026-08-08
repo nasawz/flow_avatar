@@ -49,6 +49,7 @@ class FlowAvatar extends StatefulWidget {
     this.shadow = true,
     this.audioAmplitude = 0,
     this.baseColor,
+    this.colorMode = FlowAvatarColorMode.harmonic,
     this.semanticLabel,
   }) : assert(size > 0),
        assert(speed > 0),
@@ -104,6 +105,10 @@ class FlowAvatar extends StatefulWidget {
   /// tracks this value and companion hues stay in a related family.
   final Color? baseColor;
 
+  /// Whether companion swatches may introduce new hues ([harmonic], default)
+  /// or stay on one hue ([monochrome]).
+  final FlowAvatarColorMode colorMode;
+
   /// Accessibility label exposed as an image semantic.
   final String? semanticLabel;
 
@@ -138,7 +143,8 @@ class _FlowAvatarState extends State<FlowAvatar>
   void didUpdateWidget(covariant FlowAvatar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.seed != widget.seed ||
-        oldWidget.baseColor != widget.baseColor) {
+        oldWidget.baseColor != widget.baseColor ||
+        oldWidget.colorMode != widget.colorMode) {
       _model = _buildModel();
     }
     if (oldWidget.animated != widget.animated ||
@@ -152,6 +158,7 @@ class _FlowAvatarState extends State<FlowAvatar>
     return FlowAvatarModel.fromIdentity(
       widget.seed,
       baseColor: widget.baseColor,
+      colorMode: widget.colorMode,
     );
   }
 

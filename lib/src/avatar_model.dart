@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/painting.dart';
 
 import 'avatar_seed.dart';
+import 'avatar_state.dart';
 
 /// Immutable, deterministic visual identity used by [FlowAvatar].
 final class FlowAvatarModel {
@@ -23,10 +24,23 @@ final class FlowAvatarModel {
   /// the avatar. The same [identity] + [baseColor] pair always yields the
   /// same model. Changing only [baseColor] recolors the avatar without
   /// reshaping spot geometry.
-  factory FlowAvatarModel.fromIdentity(String identity, {Color? baseColor}) {
+  ///
+  /// [colorMode] controls hue spread: [FlowAvatarColorMode.harmonic] keeps
+  /// multi-hue companions; [FlowAvatarColorMode.monochrome] varies only
+  /// lightness / saturation on one hue.
+  factory FlowAvatarModel.fromIdentity(
+    String identity, {
+    Color? baseColor,
+    FlowAvatarColorMode colorMode = FlowAvatarColorMode.harmonic,
+  }) {
     final seed = flowAvatarSeed(identity);
     final random = SeededRandom(seed);
-    final colors = _createPalette(seed, random, baseColor: baseColor);
+    final colors = _createPalette(
+      seed,
+      random,
+      baseColor: baseColor,
+      colorMode: colorMode,
+    );
     final spotCount = 9 + random.nextInt(4);
     final spots = List.generate(spotCount, (index) {
       final angle = random.between(0, math.pi * 2);
@@ -51,7 +65,12 @@ final class FlowAvatarModel {
 
     // Theme-anchored palettes already sit bright; only gently deepen the bed.
     // Seed-only palettes keep a richer dark underpainting.
-    final backgroundShift = baseColor == null ? -0.16 : -0.05;
+    // Monochrome keeps the bed close to the lead hue so it stays “one color”.
+    final backgroundShift = switch ((baseColor != null, colorMode)) {
+      (_, FlowAvatarColorMode.monochrome) => -0.04,
+      (true, _) => -0.05,
+      (false, _) => -0.16,
+    };
 
     return FlowAvatarModel(
       seed: seed,
@@ -116,7 +135,12 @@ final class FlowAvatarSpot {
   final Offset amplitude;
 }
 
-List<Color> _createPalette(int seed, SeededRandom random, {Color? baseColor}) {
+List<Color> _createPalette(
+  int seed,
+  SeededRandom random, {
+  Color? baseColor,
+  FlowAvatarColorMode colorMode = FlowAvatarColorMode.harmonic,
+}) {
   const goldenAngle = 137.507764;
   const relationships = <List<double>>[
     [0, 28, -32, 58, -62],
@@ -127,6 +151,19 @@ List<Color> _createPalette(int seed, SeededRandom random, {Color? baseColor}) {
   ];
   final baseHsl = baseColor == null ? null : HSLColor.fromColor(baseColor);
   final baseHue = baseHsl?.hue ?? ((seed * goldenAngle) % 360);
+
+  if (colorMode == FlowAvatarColorMode.monochrome) {
+    return [
+      for (var i = 0; i < 5; i++)
+        _monochromePaletteColor(
+          baseHue: baseHue,
+          slot: i,
+          random: random,
+          baseHsl: baseHsl,
+        ),
+    ];
+  }
+
   final relationship = relationships[random.nextInt(relationships.length)];
 
   return [
@@ -170,6 +207,54 @@ Color _paletteColor({
   }
 
   return HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+}
+
+/// Single-hue swatch: depth comes only from L/S steps, not companion hues.
+Color _monochromePaletteColor({
+  required double baseHue,
+  required int slot,
+  required SeededRandom random,
+  required HSLColor? baseHsl,
+}) {
+  // Fixed light ladder so mesh spots still separate without new hues.
+  const lightSteps = <double>[0.60, 0.68, 0.74, 0.54, 0.64];
+  const satSteps = <double>[0.02, -0.04, -0.08, 0.05, -0.02];
+
+  late final double saturation;
+  late final double lightness;
+  if (baseHsl == null) {
+    saturation = (0.78 + satSteps[slot] + random.between(-0.02, 0.02)).clamp(
+      0.62,
+      0.92,
+    );
+    lightness = (lightSteps[slot] + random.between(-0.015, 0.015)).clamp(
+      0.50,
+      0.80,
+    );
+  } else {
+    // Keep the caller’s chroma; only mild luminous lift for dark seeds.
+    final sourceSat = baseHsl.saturation.clamp(0.55, 1.0);
+    final softSat = (sourceSat * 0.92 + 0.06).clamp(0.62, 0.96);
+    final liftedLight = _liftLightnessMonochrome(baseHsl.lightness);
+    saturation = (softSat + satSteps[slot] + random.between(-0.02, 0.02)).clamp(
+      0.58,
+      0.96,
+    );
+    lightness = (liftedLight + (lightSteps[slot] - 0.64) * 0.55 +
+            random.between(-0.015, 0.015))
+        .clamp(0.48, 0.82);
+  }
+
+  return HSLColor.fromAHSL(1, baseHue, saturation, lightness).toColor();
+}
+
+/// Milder lift than harmonic mode so pure brand colors stay closer to source.
+double _liftLightnessMonochrome(double sourceLightness) {
+  const target = 0.60;
+  const minLift = 0.50;
+  final weight = (1.0 - sourceLightness).clamp(0.35, 0.70);
+  final lifted = sourceLightness * (1 - weight) + target * weight;
+  return lifted < minLift ? minLift : lifted;
 }
 
 /// Pushes theme lightness into a bright band without erasing hue family.
