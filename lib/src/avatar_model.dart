@@ -240,9 +240,11 @@ Color _monochromePaletteColor({
       0.58,
       0.96,
     );
-    lightness = (liftedLight + (lightSteps[slot] - 0.64) * 0.55 +
-            random.between(-0.015, 0.015))
-        .clamp(0.48, 0.82);
+    lightness =
+        (liftedLight +
+                (lightSteps[slot] - 0.64) * 0.55 +
+                random.between(-0.015, 0.015))
+            .clamp(0.48, 0.82);
   }
 
   return HSLColor.fromAHSL(1, baseHue, saturation, lightness).toColor();

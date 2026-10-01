@@ -23,7 +23,7 @@ No image assets, network calls, WebView, or native platform code are required.
 
 ```yaml
 dependencies:
-  flow_avatar: ^0.3.1
+  flow_avatar: ^0.4.0
 ```
 
 ```sh
@@ -63,6 +63,10 @@ FlowAvatar(
 
 Same `seed` + optional `baseColor` palette across all patterns; only the paint
 engine changes.
+
+Set `colorMode: FlowAvatarColorMode.monochrome` to keep the whole avatar in a
+single hue (only lightness / saturation vary). The hue comes from `baseColor`
+when set, otherwise from `seed`.
 
 When `baseColor` is set, the palette keeps that color's **hue family** but
 lifts lightness into a luminous jelly range (Material primaries are often too

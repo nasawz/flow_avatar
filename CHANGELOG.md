@@ -1,3 +1,10 @@
+## 0.4.0
+
+- Add `FlowAvatarColorMode` and `FlowAvatar.colorMode`. `harmonic` (default)
+  keeps the existing multi-hue palettes; `monochrome` stays on one hue and
+  varies only lightness / saturation, so every pattern (including `dither`)
+  renders as a single color family. Combine with `baseColor` to pick the hue.
+
 ## 0.3.1
 
 - Fix pub package contents: a minimal `.pubignore` had replaced `.gitignore`
