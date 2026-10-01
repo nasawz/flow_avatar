@@ -1,5 +1,6 @@
 import 'package:flow_avatar/flow_avatar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -112,6 +113,45 @@ void main() {
     final avatar = tester.widget<FlowAvatar>(find.byType(FlowAvatar));
     expect(avatar.baseColor, const Color(0xFFE74C3C));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('static avatar repaints pixels when only baseColor changes', (
+    tester,
+  ) async {
+    Widget build(Color color) => MaterialApp(
+      home: Center(
+        child: RepaintBoundary(
+          key: const Key('probe'),
+          child: FlowAvatar(
+            seed: 'same-seed',
+            animated: false,
+            shadow: false,
+            pattern: FlowAvatarPattern.dither,
+            colorMode: FlowAvatarColorMode.monochrome,
+            baseColor: color,
+          ),
+        ),
+      ),
+    );
+
+    Future<List<int>> pixels() async {
+      final boundary = tester.renderObject<RenderRepaintBoundary>(
+        find.byKey(const Key('probe')),
+      );
+      final bytes = await tester.runAsync(() async {
+        final image = await boundary.toImage();
+        final data = await image.toByteData();
+        image.dispose();
+        return data!.buffer.asUint8List().toList();
+      });
+      return bytes!;
+    }
+
+    await tester.pumpWidget(build(const Color(0xFF2E6B52)));
+    final before = await pixels();
+    await tester.pumpWidget(build(const Color(0xFF8E3450)));
+    final after = await pixels();
+    expect(after, isNot(equals(before)));
   });
 
   test('default pattern is mesh', () {

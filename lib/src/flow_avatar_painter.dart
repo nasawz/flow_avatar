@@ -93,7 +93,9 @@ final class FlowAvatarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant FlowAvatarPainter oldDelegate) {
-    return oldDelegate.model.seed != model.seed ||
+    // The model is rebuilt whenever seed, baseColor or colorMode change, so
+    // compare identity: a recolor keeps the same seed but must repaint.
+    return !identical(oldDelegate.model, model) ||
         oldDelegate.state != state ||
         oldDelegate.pattern != pattern ||
         oldDelegate.intensity != intensity ||

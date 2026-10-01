@@ -1,3 +1,9 @@
+## 0.4.1
+
+- Fix static avatars not repainting when only `baseColor` or `colorMode`
+  changes: `shouldRepaint` compared the seed only, so a recolor with the same
+  seed kept the old pixels until something else triggered a repaint.
+
 ## 0.4.0
 
 - Add `FlowAvatarColorMode` and `FlowAvatar.colorMode`. `harmonic` (default)
